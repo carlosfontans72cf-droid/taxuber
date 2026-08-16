@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taxuber - Panel Admin</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <meta name="theme-color" content="#FFD700">
+  <style>
+    #live-map { height: 350px; width: 100%; border-radius: 8px; }
+    .ver-contrasena { position: absolute; right: 12px; bottom: 10px; background: transparent; border: none; font-size: 18px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <h1>👔 Panel Admin</h1>
+    <span class="user-info" id="user-info"></span>
+  </nav>
+
+  <div class="dashboard">
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="number" id="stat-drivers">0</div><div class="label">Usuarios</div></div>
+      <div class="stat-card"><div class="number" id="stat-trips">0</div><div class="label">Viajes</div></div>
+    </div>
+
+    <h3 class="section-title">Agregar Chofer</h3>
+    <div class="card">
+      <div class="grid grid-2">
+        <input type="text" id="driver-nombre" class="form-control" placeholder="Nombre">
+        <input type="text" id="driver-apellido" class="form-control" placeholder="Apellido">
+      </div>
+      <div class="form-group" style="margin-top:10px; position:relative;">
+        <input type="password" id="driver-password" class="form-control" placeholder="Contraseña" style="padding-right:42px;">
+        <button type="button" class="ver-contrasena" data-target="driver-password">👁</button>
+      </div>
+      <button id="btn-add-driver" class="btn btn-primary">Agregar Chofer</button>
+    </div>
+
+    <h3 class="section-title">Crear Viaje</h3>
+    <div class="card">
+      <div class="form-group"><label>Chofer</label><select id="trip-chofer" class="form-control"><option value="">-- Seleccionar --</option></select></div>
+      <div class="grid grid-2">
+        <div><label>Origen</label><input type="text" id="manager-trip-origen" class="form-control" placeholder="Origen"></div>
+        <div><label>Destino</label><input type="text" id="manager-trip-destino" class="form-control" placeholder="Destino"></div>
+      </div>
+      <div class="form-group"><label>Personas</label><input type="number" id="manager-trip-personas" class="form-control" value="1" min="1"></div>
+      <div class="btn-group">
+        <button id="btn-calc-trip" class="btn btn-info">Calcular Costo</button>
+        <button id="btn-create-trip" class="btn btn-success">Crear Viaje</button>
+      </div>
+      <div id="manager-trip-result" style="display:none; margin-top:15px; padding:12px; background:var(--light-green); border-radius:8px;">
+        <div id="manager-trip-cost-display" style="font-size:20px; font-weight:bold; color:var(--primary-green);">$0</div>
+        <div id="manager-trip-distance-display"></div>
+        <div id="manager-trip-duration-display"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Usuarios</div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="drivers-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <h3 class="section-title">Precios</h3>
+    <div class="card">
+      <div class="grid grid-2">
+        <div><label>Por Persona ($)</label><input type="number" id="price-persona" class="price-input" step="0.01" min="0"></div>
+        <div><label>Por Zona ($)</label><input type="number" id="price-zona" class="price-input" step="0.01" min="0"></div>
+        <div><label>Por Km ($)</label><input type="number" id="price-km" class="price-input" step="0.01" min="0"></div>
+        <div><label>Por Hora ($)</label><input type="number" id="price-hora" class="price-input" step="0.01" min="0"></div>
+      </div>
+      <button id="btn-save-prices" class="btn btn-success" style="margin-top:10px">Guardar Precios</button>
+    </div>
+
+    <h3 class="section-title">Mapa en Vivo</h3>
+    <div class="card"><div id="live-map"></div></div>
+
+    <h3 class="section-title">Alertas</h3>
+    <div class="card">
+      <button id="btn-refresh-alerts" class="btn btn-danger">Ver Alertas</button>
+      <div id="alerts-list" style="margin-top:15px"></div>
+    </div>
+
+    <h3 class="section-title">Historial</h3>
+    <div class="card">
+      <div class="btn-group">
+        <button id="btn-load-history" class="btn btn-info">Ver Historial</button>
+        <button id="btn-export-excel" class="btn btn-success">Exportar Excel</button>
+      </div>
+      <div style="overflow-x:auto;margin-top:10px">
+        <table>
+          <thead><tr><th>Chofer</th><th>Ruta</th><th>Costo</th><th>Fecha</th><th>Acción</th></tr></thead>
+          <tbody id="history-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    document.addEventListener('click', e => {
+      const btn = e.target.closest('.ver-contrasena');
+      if (!btn) return;
+      const campo = document.getElementById(btn.dataset.target);
+      if (!campo) return;
+      campo.type = campo.type === 'password' ? 'text' : 'password';
+      btn.textContent = campo.type === 'password' ? '👁' : '🙈';
+    });
+  </script>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <script type="module" src="/js/manager.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2c0803d6b0aadae',t:'MTc4Njg4Mzk1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

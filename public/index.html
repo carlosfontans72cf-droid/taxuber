@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taxuber - Iniciar Sesión</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/styles.css">
+  <meta name="theme-color" content="#FFD700">
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo">🚖</div>
+      <h2>Taxuber</h2>
+      <p style="text-align:center; color:#666; margin-bottom:20px;">
+        Sistema de gestión de taxis
+      </p>
+
+      <div class="form-group">
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" class="form-control" placeholder="Tu nombre" autocomplete="off">
+      </div>
+
+      <div class="form-group">
+        <label for="apellido">Apellido</label>
+        <input type="text" id="apellido" class="form-control" placeholder="Tu apellido" autocomplete="off">
+      </div>
+
+      <div class="form-group" style="position: relative;">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" class="form-control" placeholder="Contraseña" style="padding-right:42px;">
+        <button type="button" class="ver-contrasena" data-target="password">👁</button>
+      </div>
+
+      <div id="login-error" style="color: var(--danger); text-align:center; margin-bottom:10px; min-height:20px;"></div>
+
+      <button id="btn-login" class="btn btn-primary btn-block">
+        Iniciar Sesión
+      </button>
+
+      <p style="text-align:center; margin-top:15px; color:#888; font-size:0.85rem;">
+        Ingresa con tu usuario asignado
+      </p>
+    </div>
+  </div>
+
+  <script type="module" src="/js/auth.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+    }
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2c083ae9a368692',t:'MTc4Njg4NDA5OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

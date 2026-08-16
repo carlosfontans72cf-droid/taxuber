@@ -1,0 +1,10 @@
+{
+  "name": "taxuber",
+  "version": "1.0.0",
+  "description": "App de gestión de taxis",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Static site'",
+    "deploy": "vercel --prod"
+  }
+}
