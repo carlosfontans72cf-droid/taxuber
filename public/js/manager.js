@@ -112,9 +112,9 @@ window.deleteUser = async (id) => {
 };
 
 async function loadPrices() {
-  const doc = await getDoc(doc(db, 'config', 'prices'));
-  if (doc.exists()) {
-    const p = doc.data();
+  const priceDoc = await getDoc(doc(db, 'config', 'prices'));
+  if (priceDoc.exists()) {
+    const p = priceDoc.data();
     const el = (id) => document.getElementById(id);
     if (el('price-persona')) el('price-persona').value = p.porPersona || 0;
     if (el('price-zona')) el('price-zona').value = p.porZona || 0;
