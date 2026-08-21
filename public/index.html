@@ -7,44 +7,279 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/css/styles.css">
   <meta name="theme-color" content="#FFD700">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+      background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+      margin: 0;
+      font-family: 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .login-container {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+    }
+
+    .login-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 400px;
+      padding: 28px 22px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 3rem;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #000000;
+      margin-bottom: 8px;
+      font-size: 1.45rem;
+      font-weight: 700;
+    }
+
+    .subtitulo {
+      text-align: center;
+      color: #666666;
+      margin-bottom: 22px;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #333333;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background-color: #fafafa;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: #FFD700;
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.15);
+    }
+
+    .ver-contrasena {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .ver-contrasena:hover {
+      transform: scale(1.1);
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .btn-primary {
+      background-color: #FFD700;
+      color: #000000;
+      width: 100%;
+      padding: 13px;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      background-color: #e6c200;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .mensaje-ayuda {
+      text-align: center;
+      margin-top: 18px;
+      color: #777777;
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    /* === PIE DE PÁGINA CON ENLACES LEGALES === */
+    .pie-pagina {
+      text-align: center;
+      margin-top: 20px;
+      padding: 12px 10px;
+      font-size: 0.82rem;
+      color: #cccccc;
+    }
+
+    .pie-pagina .enlaces {
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+
+    .pie-pagina a {
+      color: #FFD700;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .pie-pagina a:hover {
+      text-decoration: underline;
+    }
+
+    .pie-pagina .separador {
+      color: #666666;
+      margin: 0 8px;
+    }
+
+    .pie-pagina .copyright {
+      font-size: 0.75rem;
+      color: #888888;
+      margin-top: 4px;
+    }
+
+    /* === ESTILOS SOLO PARA PC === */
+    @media (min-width: 768px) {
+      body {
+        padding: 40px;
+      }
+
+      .login-card {
+        max-width: 440px;
+        padding: 42px 38px;
+        border-radius: 20px;
+      }
+
+      .logo {
+        font-size: 4rem;
+        margin-bottom: 12px;
+      }
+
+      h2 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+      }
+
+      .subtitulo {
+        font-size: 1rem;
+        margin-bottom: 28px;
+      }
+
+      .form-group {
+        margin-bottom: 22px;
+      }
+
+      .form-group label {
+        font-size: 1rem;
+      }
+
+      .form-control {
+        padding: 14px 16px;
+        font-size: 1.02rem;
+      }
+
+      .ver-contrasena {
+        font-size: 20px;
+        right: 14px;
+        bottom: 13px;
+      }
+
+      .btn-primary {
+        padding: 15px;
+        font-size: 1.05rem;
+      }
+
+      .mensaje-ayuda {
+        margin-top: 22px;
+        font-size: 0.9rem;
+      }
+
+      .pie-pagina {
+        margin-top: 30px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
 </head>
 <body>
-
   <div class="login-container">
     <div class="login-card">
       <div class="logo">🚖</div>
       <h2>Taxuber</h2>
-      <p style="text-align:center; color:#666; margin-bottom:20px;">
+      <p class="subtitulo">
         Sistema de gestión de taxis
       </p>
-
       <div class="form-group">
         <label for="nombre">Nombre</label>
         <input type="text" id="nombre" class="form-control" placeholder="Tu nombre" autocomplete="off">
       </div>
-
       <div class="form-group">
         <label for="apellido">Apellido</label>
         <input type="text" id="apellido" class="form-control" placeholder="Tu apellido" autocomplete="off">
       </div>
-
-      <div class="form-group" style="position: relative;">
+      <div class="form-group">
         <label for="password">Contraseña</label>
-        <input type="password" id="password" class="form-control" placeholder="Contraseña" style="padding-right:42px;">
+        <input type="password" id="password" class="form-control" placeholder="Contraseña" style="padding-right: 44px;">
         <button type="button" class="ver-contrasena" data-target="password">👁</button>
       </div>
-
       <div id="login-error" style="color: var(--danger); text-align:center; margin-bottom:10px; min-height:20px;"></div>
-
       <button id="btn-login" class="btn btn-primary btn-block">
         Iniciar Sesión
       </button>
-
-      <p style="text-align:center; margin-top:15px; color:#888; font-size:0.85rem;">
+      <p class="mensaje-ayuda">
         Ingresa con tu usuario asignado
       </p>
     </div>
   </div>
+
+  <!-- === PIE DE PÁGINA CON ENLACES LEGALES === -->
+  <footer class="pie-pagina">
+    <div class="enlaces">
+      <a href="politica-privacidad.html">Política de Privacidad</a>
+      <span class="separador">|</span>
+      <a href="terminos-uso.html">Términos de Uso</a>
+      <span class="separador">|</span>
+      <a href="aviso-legal.html">Aviso Legal</a>
+    </div>
+    <div class="copyright">
+      © 2026 Taxuber — Todos los derechos reservados
+    </div>
+  </footer>
 
   <script type="module" src="/js/auth.js"></script>
   <script>
@@ -52,5 +287,5 @@
       window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
     }
   </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2c083ae9a368692',t:'MTc4Njg4NDA5OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
