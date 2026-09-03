@@ -1,16 +1,26 @@
 // api/create-empresa.js
 // Da de alta una empresa nueva (un cliente que te alquila la app) y su usuario
-// "owner" inicial. Protegido con un secreto propio (SUPERADMIN_SECRET en Vercel)
-// porque todavía no hay un panel de superadmin con su propio login: es un
-// paso intermedio hasta que armemos ese panel. Llamalo vos mismo (con curl o
-// Postman) cada vez que sumes una empresa nueva.
-import { adminAuth, adminDb } from './_firebaseAdmin.js';
+// "owner" inicial. Se puede llamar de dos formas: con el header
+// x-superadmin-secret (para el alta inicial con curl), o ya logueado como
+// superadmin desde el panel /pages/superadmin.html (con tu token de sesión).
+import { adminAuth, adminDb, verifyCaller } from './_firebaseAdmin.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const secret = req.headers['x-superadmin-secret'];
-  if (!secret || secret !== process.env.SUPERADMIN_SECRET) {
+  let autorizado = Boolean(secret && secret === process.env.SUPERADMIN_SECRET);
+
+  if (!autorizado) {
+    try {
+      const caller = await verifyCaller(req);
+      autorizado = caller.role === 'superadmin';
+    } catch (_) {
+      // sin token válido tampoco -> sigue no autorizado
+    }
+  }
+
+  if (!autorizado) {
     return res.status(403).json({ error: 'No autorizado' });
   }
 

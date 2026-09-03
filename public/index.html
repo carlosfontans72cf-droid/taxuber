@@ -280,6 +280,10 @@
 
   <script type="module" src="/js/auth.js"></script>
   <script>
+    if (new URLSearchParams(window.location.search).get('bloqueada') === '1') {
+      document.getElementById('login-error').textContent =
+        'El acceso de tu empresa fue suspendido. Contactá al administrador de Taxuber.';
+    }
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
     }

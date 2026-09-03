@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taxuber - Superadmin</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/styles.css">
+  <meta name="theme-color" content="#000000">
+</head>
+<body>
+
+  <nav class="navbar" style="background:#000; color:#FFD700;">
+    <h1>🛠️ Superadmin</h1>
+    <span class="user-info" id="admin-name">Cargando...</span>
+    <button class="btn btn-sm" onclick="logout()">Salir</button>
+  </nav>
+
+  <div class="dashboard">
+
+    <h3 class="section-title">Crear Empresa Nueva</h3>
+    <div class="card">
+      <div class="form-group"><label>Nombre de la Empresa</label><input type="text" id="nueva-empresa-nombre" class="form-control"></div>
+      <div class="grid grid-2">
+        <input type="text" id="nueva-empresa-owner-nombre" class="form-control" placeholder="Nombre del dueño">
+        <input type="text" id="nueva-empresa-owner-apellido" class="form-control" placeholder="Apellido del dueño">
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <input type="email" id="nueva-empresa-owner-email" class="form-control" placeholder="Email del dueño">
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <input type="password" id="nueva-empresa-owner-password" class="form-control" placeholder="Contraseña inicial">
+      </div>
+      <button id="btn-crear-empresa" class="btn btn-primary">Crear Empresa</button>
+    </div>
+
+    <h3 class="section-title">Empresas</h3>
+    <div class="card">
+      <button id="btn-refresh" class="btn btn-info">Refrescar</button>
+    </div>
+    <div id="empresas-list"></div>
+
+  </div>
+
+  <script type="module" src="/js/superadmin.js"></script>
+</body>
+</html>

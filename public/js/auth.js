@@ -24,14 +24,15 @@ btnLogin.addEventListener('click', async () => {
     const tokenResult = await cred.user.getIdTokenResult(true);
     const { role, empresaId } = tokenResult.claims;
 
-    if (!role || !empresaId) {
+    if (!role || (role !== 'superadmin' && !empresaId)) {
       errorDiv.textContent = 'Esta cuenta no tiene una empresa asignada. Contactá al administrador.';
       await signOut(auth);
       return;
     }
 
     let destino = '/pages/dashboard-driver.html';
-    if (role === 'owner') destino = '/pages/dashboard-owner.html';
+    if (role === 'superadmin') destino = '/pages/superadmin.html';
+    else if (role === 'owner') destino = '/pages/dashboard-owner.html';
     else if (role === 'manager') destino = '/pages/dashboard-manager.html';
     else if (role === 'cliente') destino = '/pages/dashboard-client.html';
 

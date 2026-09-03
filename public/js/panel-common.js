@@ -1,11 +1,14 @@
 // panel-common.js - Helpers compartidos entre todos los paneles (multiempresa)
 import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { collection, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { collection, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Protege una página de dashboard: exige sesión activa y un rol permitido.
 // Refresca el token para traer los custom claims más recientes (empresaId, role) -
 // así si un owner/manager te desactiva, el próximo refresh te saca del panel.
+// El rol "superadmin" no tiene empresaId (administra todas las empresas).
+// Para el resto de los roles, además chequea que el superadmin no haya
+// bloqueado la empresa (empresas/{empresaId}.activa === false).
 // Llama a onReady({ uid, empresaId, role, nombre }) si todo está bien.
 export function guardPage(allowedRoles, onReady) {
   onAuthStateChanged(auth, async (user) => {
@@ -17,15 +20,29 @@ export function guardPage(allowedRoles, onReady) {
       const tokenResult = await user.getIdTokenResult(true);
       const { role, empresaId } = tokenResult.claims;
 
-      if (!role || !empresaId || !allowedRoles.includes(role)) {
+      if (!role || !allowedRoles.includes(role)) {
         await signOut(auth);
         window.location.href = '/';
         return;
       }
 
+      if (role !== 'superadmin') {
+        if (!empresaId) {
+          await signOut(auth);
+          window.location.href = '/';
+          return;
+        }
+        const empresaSnap = await getDoc(doc(db, 'empresas', empresaId));
+        if (empresaSnap.exists() && empresaSnap.data().activa === false) {
+          await signOut(auth);
+          window.location.href = '/?bloqueada=1';
+          return;
+        }
+      }
+
       onReady({
         uid: user.uid,
-        empresaId,
+        empresaId: empresaId || null,
         role,
         nombre: user.displayName || ''
       });
