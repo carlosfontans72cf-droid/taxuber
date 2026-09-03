@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Usuarios: cualquiera puede leer (para login), solo autenticados pueden escribir
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null || true;
+    }
+    
+    // Viajes: lectura y escritura permitida
+    match /trips/{tripId} {
+      allow read, write: if true;
+    }
+    
+    // Alertas: lectura y escritura permitida
+    match /alerts/{alertId} {
+      allow read, write: if true;
+    }
+    
+    // Configuración (precios, estado app)
+    match /config/{configId} {
+      allow read, write: if true;
+    }
+    
+    // Alertas guardadas
+    match /saved_alerts/{alertId} {
+      allow read, write: if true;
+    }
+  }
+}

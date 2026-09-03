@@ -1,10 +1,13 @@
 {
   "name": "taxuber",
-  "version": "1.0.0",
-  "description": "App de gestión de taxis",
+  "version": "2.0.0",
+  "description": "App de gestión de traslados - multiempresa",
   "scripts": {
     "dev": "vercel dev",
     "build": "echo 'Static site'",
     "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.0"
   }
 }

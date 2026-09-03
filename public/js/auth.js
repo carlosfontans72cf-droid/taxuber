@@ -1,73 +1,49 @@
-// Sistema de autenticación simplificado
-import { db } from './firebase-config.js';
-import { collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+// auth.js - Login real con Firebase Authentication (multiempresa)
+import { auth } from './firebase-config.js';
+import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const btnLogin = document.getElementById('btn-login');
 const errorDiv = document.getElementById('login-error');
 
 btnLogin.addEventListener('click', async () => {
-  const nombre = document.getElementById('nombre').value.trim();
-  const apellido = document.getElementById('apellido').value.trim();
+  const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value;
 
   errorDiv.textContent = '';
+
+  if (!email || !password) {
+    errorDiv.textContent = 'Completá todos los campos';
+    return;
+  }
+
   btnLogin.disabled = true;
   btnLogin.textContent = 'Entrando...';
 
   try {
-    if (!nombre || !apellido || !password) {
-      errorDiv.textContent = 'Completá todos los campos';
-      throw new Error('Faltan datos');
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    const tokenResult = await cred.user.getIdTokenResult(true);
+    const { role, empresaId } = tokenResult.claims;
+
+    if (!role || !empresaId) {
+      errorDiv.textContent = 'Esta cuenta no tiene una empresa asignada. Contactá al administrador.';
+      await signOut(auth);
+      return;
     }
 
-    const usersRef = collection(db, 'users');
-    const consulta = query(
-      usersRef,
-      where('nombre', '==', nombre),
-      where('apellido', '==', apellido)
-    );
-    const resultado = await getDocs(consulta);
-
-    if (resultado.empty) {
-      errorDiv.textContent = 'Usuario no registrado';
-      throw new Error('Usuario no encontrado');
-    }
-
-    let datosUsuario = null;
-    let idUsuario = null;
-
-    for (const registro of resultado.docs) {
-      const datos = registro.data();
-      if (datos.password === password) {
-        if (!datos.activo) {
-          errorDiv.textContent = 'Cuenta desactivada';
-          throw new Error('Usuario inactivo');
-        }
-        datosUsuario = datos;
-        idUsuario = registro.id;
-        break;
-      }
-    }
-
-    if (!datosUsuario) {
-      errorDiv.textContent = 'Contraseña incorrecta';
-      throw new Error('Contraseña incorrecta');
-    }
-
-    // Guardar sesión
-    sessionStorage.setItem('userRole', datosUsuario.role);
-    sessionStorage.setItem('userId', idUsuario);
-    sessionStorage.setItem('fullName', `${datosUsuario.nombre} ${datosUsuario.apellido}`);
-
-    // Redirección según rol
     let destino = '/pages/dashboard-driver.html';
-    if (datosUsuario.role === 'owner') destino = '/pages/dashboard-owner.html';
-    else if (datosUsuario.role === 'manager') destino = '/pages/dashboard-manager.html';
+    if (role === 'owner') destino = '/pages/dashboard-owner.html';
+    else if (role === 'manager') destino = '/pages/dashboard-manager.html';
+    else if (role === 'cliente') destino = '/pages/dashboard-client.html';
 
     window.location.href = destino;
 
   } catch (error) {
     console.error('Error login:', error);
+    if (error.code === 'auth/user-disabled') {
+      errorDiv.textContent = 'Esta cuenta fue desactivada';
+    } else {
+      errorDiv.textContent = 'Email o contraseña incorrectos';
+    }
   } finally {
     btnLogin.disabled = false;
     btnLogin.textContent = 'Iniciar Sesión';

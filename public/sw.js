@@ -35,8 +35,7 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
-  
-  // No cachear APIs externas ni Google Maps
+
   if (
     url.includes('maps.googleapis.com') ||
     url.includes('googleapis.com') ||

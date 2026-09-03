@@ -18,6 +18,7 @@
   <nav class="navbar">
     <h1>👔 Panel Admin</h1>
     <span class="user-info" id="user-info"></span>
+    <button class="btn btn-sm" onclick="logout()">Salir</button>
   </nav>
 
   <div class="dashboard">
@@ -33,11 +34,20 @@
         <input type="text" id="driver-nombre" class="form-control" placeholder="Nombre">
         <input type="text" id="driver-apellido" class="form-control" placeholder="Apellido">
       </div>
+      <div class="form-group" style="margin-top:10px">
+        <input type="email" id="driver-email" class="form-control" placeholder="Email">
+      </div>
       <div class="form-group" style="margin-top:10px; position:relative;">
         <input type="password" id="driver-password" class="form-control" placeholder="Contraseña" style="padding-right:42px;">
         <button type="button" class="ver-contrasena" data-target="driver-password">👁</button>
       </div>
       <button id="btn-add-driver" class="btn btn-primary">Agregar Chofer</button>
+    </div>
+
+    <h3 class="section-title">Pedidos de Clientes</h3>
+    <div class="card">
+      <button id="btn-refresh-requests" class="btn btn-info">Refrescar Pedidos</button>
+      <div id="pending-requests" style="margin-top:15px"></div>
     </div>
 
     <h3 class="section-title">Crear Viaje</h3>
@@ -119,5 +129,5 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
   <script type="module" src="/js/manager.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2c0803d6b0aadae',t:'MTc4Njg4Mzk1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
