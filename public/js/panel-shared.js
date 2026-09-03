@@ -87,6 +87,9 @@ export function makePanel(empresaId, opts = {}) {
         document.getElementById(id).value = '';
       });
       showAlert('Chofer registrado', 'success');
+      // Único momento en que tenemos la contraseña en texto plano (ya no se guarda en ningún lado).
+      const mensaje = `Hola ${nombre}, tus credenciales Taxuber:\nEmail: ${email}\nContraseña: ${clave}\nApp: https://taxuber.vercel.app`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
       loadDrivers();
     } catch (err) {
       showAlert(`Error: ${err.message}`, 'danger');
@@ -108,6 +111,8 @@ export function makePanel(empresaId, opts = {}) {
           document.getElementById(id).value = '';
         });
         showAlert('Admin registrado', 'success');
+        const mensaje = `Hola ${nombre}, tus credenciales Taxuber:\nEmail: ${email}\nContraseña: ${clave}\nApp: https://taxuber.vercel.app`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
         loadDrivers();
       } catch (err) {
         showAlert(`Error: ${err.message}`, 'danger');
@@ -137,14 +142,18 @@ export function makePanel(empresaId, opts = {}) {
   };
 
   async function loadPrices() {
-    const priceDoc = await getDoc(empresaDoc(empresaId, 'config', 'prices'));
-    if (priceDoc.exists()) {
-      const p = priceDoc.data();
-      const el = (id) => document.getElementById(id);
-      if (el('price-persona')) el('price-persona').value = p.porPersona || 0;
-      if (el('price-zona')) el('price-zona').value = p.porZona || 0;
-      if (el('price-km')) el('price-km').value = p.porKm || 0;
-      if (el('price-hora')) el('price-hora').value = p.porHora || 0;
+    try {
+      const priceDoc = await getDoc(empresaDoc(empresaId, 'config', 'prices'));
+      if (priceDoc.exists()) {
+        const p = priceDoc.data();
+        const el = (id) => document.getElementById(id);
+        if (el('price-persona')) el('price-persona').value = p.porPersona || 0;
+        if (el('price-zona')) el('price-zona').value = p.porZona || 0;
+        if (el('price-km')) el('price-km').value = p.porKm || 0;
+        if (el('price-hora')) el('price-hora').value = p.porHora || 0;
+      }
+    } catch (err) {
+      console.error('Error cargando precios:', err);
     }
   }
 
@@ -442,9 +451,25 @@ export function makePanel(empresaId, opts = {}) {
 
   return {
     init: async () => {
-      await loadDrivers(); // primero, porque loadPendingRequests necesita driversCache
-      await Promise.all([loadPrices(), loadAlerts(), loadStats(), initLiveMap(), loadPendingRequests()]);
+      // Los botones se conectan primero, pase lo que pase con la carga de datos de abajo.
+      // Antes, si loadPrices/initLiveMap fallaban (ej: empresa nueva sin precios cargados
+      // todavía), el error cortaba la ejecución ANTES de llegar a setupListeners() y los
+      // botones quedaban sin funcionar, sin ningún aviso visible.
       setupListeners();
+
+      try {
+        await loadDrivers(); // primero, porque loadPendingRequests necesita driversCache
+      } catch (err) {
+        console.error('Error cargando usuarios:', err);
+      }
+
+      await Promise.allSettled([loadPrices(), loadAlerts(), loadStats(), loadPendingRequests()]);
+
+      try {
+        initLiveMap();
+      } catch (err) {
+        console.error('Error inicializando el mapa:', err);
+      }
     }
   };
 }
