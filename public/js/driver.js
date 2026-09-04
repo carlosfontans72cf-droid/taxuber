@@ -40,6 +40,7 @@ async function loadZonas() {
     });
   } catch (err) {
     console.error('Error cargando zonas:', err);
+    showAlert(`No se pudieron cargar las zonas: ${err.message}`, 'warning');
   }
 }
 
