@@ -1,6 +1,6 @@
 // auth.js - Login real con Firebase Authentication (multiempresa)
 import { auth } from './firebase-config.js';
-import { signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const btnLogin = document.getElementById('btn-login');
 const errorDiv = document.getElementById('login-error');
@@ -59,4 +59,26 @@ document.addEventListener('click', e => {
   if (!campo) return;
   campo.type = campo.type === 'password' ? 'text' : 'password';
   btn.textContent = campo.type === 'password' ? '👁' : '🙈';
+});
+
+// Recuperar contraseña
+document.getElementById('btn-forgot-password')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+
+  if (!email) {
+    errorDiv.style.color = '';
+    errorDiv.textContent = 'Escribí tu email arriba y volvé a tocar el link';
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    errorDiv.style.color = '#28A745';
+    errorDiv.textContent = 'Te enviamos un email para restablecer tu contraseña.';
+  } catch (error) {
+    console.error('Error al enviar email de recuperación:', error);
+    errorDiv.style.color = '';
+    errorDiv.textContent = 'No pudimos enviar el email. Revisá que esté bien escrito.';
+  }
 });

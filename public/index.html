@@ -173,6 +173,63 @@
       margin-top: 4px;
     }
 
+    /* === TARJETA CF APPS DEVELOPER === */
+    .dev-promo {
+      width: 100%;
+      max-width: 400px;
+      background: linear-gradient(160deg, #0a1a3a 0%, #050a1a 100%);
+      border-radius: 16px;
+      padding: 22px 20px;
+      margin-bottom: 18px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .dev-promo-logo {
+      font-size: 1.7rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .dev-promo-logo .tag { color: #2ee6a6; }
+    .dev-promo-logo .cf { color: #FFD700; }
+    .dev-promo-subtitle {
+      color: #cfd8ee;
+      font-size: 0.78rem;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+    .dev-promo-text {
+      color: #e7ebf7;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      margin-bottom: 14px;
+    }
+    .dev-promo-text b { color: #FFD700; }
+    .dev-promo-text .idea { color: #ffe98a; }
+    .dev-promo-phones {
+      color: #9fb3d9;
+      font-size: 0.8rem;
+      margin-bottom: 14px;
+    }
+    .dev-promo-btn {
+      display: block;
+      width: 100%;
+      padding: 11px;
+      margin-bottom: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #17d67a, #0fae8f);
+      color: #fff;
+      font-weight: 700;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .dev-promo-footer {
+      color: #6b7794;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      margin-top: 4px;
+    }
+
     /* === ESTILOS SOLO PARA PC === */
     @media (min-width: 768px) {
       body {
@@ -237,7 +294,20 @@
   </style>
 </head>
 <body>
-  <div class="login-container">
+  <div class="login-container" style="flex-direction:column;">
+    <div class="dev-promo">
+      <div class="dev-promo-logo"><span class="tag">&lt;/&gt;</span> <span class="cf">CF</span></div>
+      <div class="dev-promo-subtitle">DESARROLLADOR DE APPS</div>
+      <p class="dev-promo-text">
+        ¿Tenés una <span class="idea">idea</span>? Te la convertimos en <b>app</b>.<br>
+        Desarrollo a medida para comercios, restaurantes y servicios.
+      </p>
+      <div class="dev-promo-phones">UY +598 95 205598 &nbsp;·&nbsp; BR +55 53 99926-5575</div>
+      <a class="dev-promo-btn" href="https://wa.me/59895205598" target="_blank" rel="noopener">🇺🇾 WhatsApp Uruguay</a>
+      <a class="dev-promo-btn" href="https://wa.me/5553999265575" target="_blank" rel="noopener">🇧🇷 WhatsApp Brasil</a>
+      <div class="dev-promo-footer">POWERED BY CF APPS DEVELOPER</div>
+    </div>
+
     <div class="login-card">
       <div class="logo">🚖</div>
       <h2>Taxuber</h2>
@@ -257,6 +327,9 @@
       <button id="btn-login" class="btn btn-primary btn-block">
         Iniciar Sesión
       </button>
+      <p class="mensaje-ayuda" style="margin-top:12px;">
+        <a href="#" id="btn-forgot-password" style="color:#666; text-decoration:underline;">¿Olvidaste tu contraseña?</a>
+      </p>
       <p class="mensaje-ayuda">
         Ingresá con la cuenta que te asignó tu empresa.<br>
         ¿Sos cliente y todavía no tenés cuenta? Pedile a la empresa tu link de registro.

@@ -43,6 +43,7 @@ self.addEventListener('fetch', (event) => {
     url.includes('openstreetmap.org') ||
     url.includes('unpkg.com') ||
     url.includes('cdn.sheetjs.com') ||
+    url.includes('/js/') ||
     url.includes('/api/')
   ) {
     return;
