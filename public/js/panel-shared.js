@@ -152,11 +152,6 @@ export function makePanel(empresaId, opts = {}) {
         if (el('price-zona')) el('price-zona').value = p.porZona || 0;
         if (el('price-km')) el('price-km').value = p.porKm || 0;
         if (el('price-hora')) el('price-hora').value = p.porHora || 0;
-        // Precarga (no obligatoria) de los campos por-viaje, para que el admin
-        // vea el valor global por defecto y solo lo toque si necesita ajustarlo.
-        if (el(`${prefix}-trip-porzona`) && el(`${prefix}-trip-porzona`).value === '') el(`${prefix}-trip-porzona`).value = p.porZona || 0;
-        if (el(`${prefix}-trip-porkm`) && el(`${prefix}-trip-porkm`).value === '') el(`${prefix}-trip-porkm`).value = p.porKm || 0;
-        if (el(`${prefix}-trip-porhora`) && el(`${prefix}-trip-porhora`).value === '') el(`${prefix}-trip-porhora`).value = p.porHora || 0;
       }
     } catch (err) {
       console.error('Error cargando precios:', err);
@@ -182,27 +177,22 @@ export function makePanel(empresaId, opts = {}) {
     const origen = document.getElementById(`${prefix}-trip-origen`)?.value.trim();
     const destino = document.getElementById(`${prefix}-trip-destino`)?.value.trim();
     const personas = parseInt(document.getElementById(`${prefix}-trip-personas`)?.value) || 1;
+    const modo = document.getElementById(`${prefix}-trip-modo`)?.value || 'km';
+    const zonaSelect = document.getElementById(`${prefix}-trip-zona`);
+    const zonaPrecioKm = zonaSelect?.value ? parseFloat(zonaSelect.selectedOptions[0].dataset.preciokm) : null;
 
     if (!origen || !destino) return showAlert('Escribí origen y destino', 'warning');
 
     try {
       const priceSnap = await getDoc(empresaDoc(empresaId, 'config', 'prices'));
-      const globalPrecios = priceSnap.exists() ? priceSnap.data() : { porPersona: 0, porZona: 0, porKm: 0, porHora: 0 };
+      let precios = priceSnap.exists() ? priceSnap.data() : { porPersona: 0, porZona: 0, porKm: 0, porHora: 0 };
 
-      // Zona/Km/Hora se pueden ajustar puntualmente para este viaje; si se dejan
-      // vacíos, se usa el valor global configurado en "Precios".
-      const zonaInput = document.getElementById(`${prefix}-trip-porzona`);
-      const kmInput = document.getElementById(`${prefix}-trip-porkm`);
-      const horaInput = document.getElementById(`${prefix}-trip-porhora`);
+      // Si se calcula por Km y se eligió una zona, se usa el precio por km propio de esa zona.
+      if (modo === 'km' && zonaPrecioKm !== null && !isNaN(zonaPrecioKm)) {
+        precios = { ...precios, porKm: zonaPrecioKm };
+      }
 
-      const precios = {
-        porPersona: globalPrecios.porPersona || 0,
-        porZona: zonaInput?.value !== '' ? parseFloat(zonaInput.value) : (globalPrecios.porZona || 0),
-        porKm: kmInput?.value !== '' ? parseFloat(kmInput.value) : (globalPrecios.porKm || 0),
-        porHora: horaInput?.value !== '' ? parseFloat(horaInput.value) : (globalPrecios.porHora || 0)
-      };
-
-      const resultado = await calculateRouteCost(origen, destino, precios, personas);
+      const resultado = await calculateRouteCost(origen, destino, precios, personas, modo);
 
       const resDiv = document.getElementById(`${prefix}-trip-result`);
       if (resDiv) {
@@ -327,30 +317,44 @@ export function makePanel(empresaId, opts = {}) {
   // --- Zonas (precio por Km propio de cada zona, ej: "José Ignacio" a $100/km) ---
   async function loadZonas() {
     const cont = document.getElementById('zonas-list');
-    if (!cont) return;
-    cont.innerHTML = '';
+    const tripZonaSelect = document.getElementById(`${prefix}-trip-zona`);
+    let zonas = [];
+
     try {
       const snap = await getDocs(empresaCol(empresaId, 'zonas'));
-      const zonas = [];
       snap.forEach(d => zonas.push({ id: d.id, ...d.data() }));
       zonas.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
-
-      if (!zonas.length) {
-        cont.innerHTML = '<p style="color:#888">Todavía no cargaste ninguna zona.</p>';
-        return;
-      }
-      zonas.forEach(z => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <div><strong>${z.nombre}</strong> — $${z.precioKm}/km</div>
-          <div class="btn-group" style="margin-top:8px">
-            <button class="btn btn-sm btn-danger" onclick="deleteZona('${z.id}')">Eliminar</button>
-          </div>`;
-        cont.appendChild(div);
-      });
     } catch (err) {
       showAlert(`Error: ${err.message}`, 'danger');
+    }
+
+    if (cont) {
+      cont.innerHTML = '';
+      if (!zonas.length) {
+        cont.innerHTML = '<p style="color:#888">Todavía no cargaste ninguna zona.</p>';
+      } else {
+        zonas.forEach(z => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <div><strong>${z.nombre}</strong> — $${z.precioKm}/km</div>
+            <div class="btn-group" style="margin-top:8px">
+              <button class="btn btn-sm btn-danger" onclick="deleteZona('${z.id}')">Eliminar</button>
+            </div>`;
+          cont.appendChild(div);
+        });
+      }
+    }
+
+    if (tripZonaSelect) {
+      tripZonaSelect.innerHTML = '<option value="">Sin zona (tarifa Km normal)</option>';
+      zonas.forEach(z => {
+        const opt = document.createElement('option');
+        opt.value = z.id;
+        opt.dataset.preciokm = z.precioKm;
+        opt.textContent = `${z.nombre} ($${z.precioKm}/km)`;
+        tripZonaSelect.appendChild(opt);
+      });
     }
   }
 

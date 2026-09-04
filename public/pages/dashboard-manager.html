@@ -58,11 +58,18 @@
         <div><label>Destino</label><input type="text" id="manager-trip-destino" class="form-control" placeholder="Destino"></div>
       </div>
       <div class="form-group"><label>Personas</label><input type="number" id="manager-trip-personas" class="form-control" value="1" min="1"></div>
-      <div class="grid grid-2" style="margin-top:10px">
-        <div><label>Por Zona ($)</label><input type="number" id="manager-trip-porzona" class="form-control" step="0.01" min="0"></div>
-        <div><label>Por Km ($)</label><input type="number" id="manager-trip-porkm" class="form-control" step="0.01" min="0"></div>
+      <div class="form-group" style="margin-top:10px"><label>Calcular por</label>
+        <select id="manager-trip-modo" class="form-control">
+          <option value="km">Kilómetros</option>
+          <option value="hora">Hora</option>
+          <option value="personas">Personas</option>
+        </select>
       </div>
-      <div class="form-group" style="margin-top:10px"><label>Por Hora ($)</label><input type="number" id="manager-trip-porhora" class="form-control" step="0.01" min="0"></div>
+      <div class="form-group" style="margin-top:10px"><label>Zona (opcional, solo afecta el cálculo por Km)</label>
+        <select id="manager-trip-zona" class="form-control">
+          <option value="">Sin zona (tarifa Km normal)</option>
+        </select>
+      </div>
       <div class="btn-group" style="margin-top:10px">
         <button id="btn-calc-trip" class="btn btn-info">Calcular Costo</button>
         <button id="btn-create-trip" class="btn btn-success">Crear Viaje</button>
