@@ -74,8 +74,11 @@ async function geocode(address) {
   return response.results[0];
 }
 
-// Calcular ruta y costo
-export async function calculateRouteCost(origen, destino, precios, personas = 1) {
+// Calcular ruta y costo.
+// modo: 'todos' (default, usado por Admin/Dueño) suma km+hora+zona+persona,
+// tal como funcionaba siempre. 'km' | 'hora' | 'zona' (usado por el Chofer)
+// usa SOLO esa tarifa + persona — el chofer elige el modo, nunca los precios.
+export async function calculateRouteCost(origen, destino, precios, personas = 1, modo = 'todos') {
   if (!origen?.trim() || !destino?.trim()) {
     throw new Error('Escribí origen y destino');
   }
@@ -105,7 +108,13 @@ export async function calculateRouteCost(origen, destino, precios, personas = 1)
   const pPersona = precios?.porPersona || 0;
   const pZona = precios?.porZona || 0;
 
-  const costoTotal = (distanceKm * pKm + durationHours * pHora + personas * pPersona + pZona).toFixed(2);
+  let costoBase;
+  if (modo === 'km') costoBase = distanceKm * pKm;
+  else if (modo === 'hora') costoBase = durationHours * pHora;
+  else if (modo === 'zona') costoBase = pZona;
+  else costoBase = distanceKm * pKm + durationHours * pHora + pZona; // 'todos'
+
+  const costoTotal = (costoBase + personas * pPersona).toFixed(2);
 
   return {
     costo: `$${costoTotal}`,
@@ -113,7 +122,9 @@ export async function calculateRouteCost(origen, destino, precios, personas = 1)
     duration: leg.duration.text,
     distanceKm,
     durationHours,
-    polyline: dirResponse.routes[0].overview_polyline?.points || null
+    polyline: dirResponse.routes[0].overview_polyline?.points || null,
+    origenCoords: { lat: oLat, lng: oLng },
+    destinoCoords: { lat: dLat, lng: dLng }
   };
 }
 
@@ -145,6 +156,34 @@ export function decodePolyline(encoded) {
     puntos.push([lat * 1e-5, lng * 1e-5]);
   }
   return puntos;
+}
+
+// Distancia en metros entre dos puntos [lat,lng] (fórmula de Haversine).
+function distanciaMetros([lat1, lng1], [lat2, lng2]) {
+  const R = 6371000;
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLng = (lng2 - lng1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Distancia aproximada en metros de un punto al segmento más cercano de una
+// ruta (lista de puntos [lat,lng]). Se usa para la alerta de "fuera de ruta".
+export function distanciaARuta(punto, rutaPuntos) {
+  if (!rutaPuntos?.length) return 0;
+  if (rutaPuntos.length === 1) return distanciaMetros(punto, rutaPuntos[0]);
+
+  let minDist = Infinity;
+  for (let i = 0; i < rutaPuntos.length - 1; i++) {
+    // Aproximación: distancia al punto más cercano entre los dos extremos
+    // del segmento (suficiente para segmentos cortos de una polilínea de ruta).
+    const dA = distanciaMetros(punto, rutaPuntos[i]);
+    const dB = distanciaMetros(punto, rutaPuntos[i + 1]);
+    minDist = Math.min(minDist, dA, dB);
+  }
+  return minDist;
 }
 
 export function exportToExcel(data, filename = 'taxuber.xlsx') {

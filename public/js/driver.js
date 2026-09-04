@@ -2,12 +2,15 @@
 import {
   updateDoc, addDoc, query, where, getDocs, getDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { showAlert, getCurrentLocation, calculateRouteCost } from './utils.js';
+import { showAlert, getCurrentLocation, calculateRouteCost, decodePolyline, distanciaARuta } from './utils.js';
 import { guardPage, empresaCol, empresaDoc, logout } from './panel-common.js';
 
 let empresaId, driverId, driverName;
 let map, marker;
 let tripActive = false;
+let rutaActiva = null;       // puntos [lat,lng] de la ruta del viaje en curso
+let fueraDeRutaAvisado = false; // para no mandar la alerta repetida en cada GPS tick
+const UMBRAL_FUERA_DE_RUTA_M = 200; // metros
 
 guardPage(['driver'], (session) => {
   empresaId = session.empresaId;
@@ -49,6 +52,24 @@ function startGPS() {
           lat: latitude, lng: longitude, lastUpdate: serverTimestamp()
         });
       } catch (err) { console.log('Error GPS:', err); }
+
+      // Si hay un viaje en curso con ruta calculada, chequear desvío.
+      if (tripActive && rutaActiva?.length) {
+        const distancia = distanciaARuta([latitude, longitude], rutaActiva);
+        if (distancia > UMBRAL_FUERA_DE_RUTA_M && !fueraDeRutaAvisado) {
+          fueraDeRutaAvisado = true;
+          try {
+            await addDoc(empresaCol(empresaId, 'alerts'), {
+              tipo: 'Fuera de Ruta',
+              descripcion: `El chofer se alejó ~${Math.round(distancia)}m de la ruta planeada.`,
+              userId: driverId, nombreConductor: driverName,
+              lat: latitude, lng: longitude, fechaHora: serverTimestamp()
+            });
+          } catch (err) { console.log('Error alerta fuera de ruta:', err); }
+        } else if (distancia <= UMBRAL_FUERA_DE_RUTA_M) {
+          fueraDeRutaAvisado = false; // vuelve a la ruta -> puede avisar de nuevo si se desvía otra vez
+        }
+      }
     },
     () => showAlert('Señal GPS débil', 'warning'),
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
@@ -59,13 +80,14 @@ window.calculateCost = async () => {
   const origen = document.getElementById('trip-origen').value.trim();
   const destino = document.getElementById('trip-destino').value.trim();
   const personas = parseInt(document.getElementById('trip-personas').value) || 1;
+  const modo = document.getElementById('trip-modo')?.value || 'km';
 
   if (!origen || !destino) return showAlert('Escribí origen y destino', 'warning');
 
   try {
     const priceSnap = await getDoc(empresaDoc(empresaId, 'config', 'prices'));
     const precios = priceSnap.exists() ? priceSnap.data() : { porPersona: 0, porZona: 0, porKm: 0, porHora: 0 };
-    const resultado = await calculateRouteCost(origen, destino, precios, personas);
+    const resultado = await calculateRouteCost(origen, destino, precios, personas, modo);
 
     document.getElementById('trip-result').style.display = 'block';
     document.getElementById('trip-cost-display').textContent = resultado.costo;
@@ -97,7 +119,13 @@ window.startTrip = async () => {
       fechaInicio: serverTimestamp()
     });
     tripActive = true;
+    rutaActiva = decodePolyline(datos.polyline);
+    fueraDeRutaAvisado = false;
     showAlert('Viaje iniciado', 'success');
+
+    // Abre Google Maps con navegación real turn-by-turn para este viaje.
+    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(datos.origen)}&destination=${encodeURIComponent(datos.destino)}&travelmode=driving`;
+    window.open(mapsUrl, '_blank');
   } catch (err) {
     showAlert(`Error: ${err.message}`, 'danger');
   }
@@ -121,6 +149,8 @@ window.endTrip = async () => {
     });
 
     tripActive = false;
+    rutaActiva = null;
+    fueraDeRutaAvisado = false;
     showAlert('Viaje finalizado', 'success');
   } catch (err) {
     showAlert(`Error: ${err.message}`, 'danger');
