@@ -112,8 +112,39 @@ export async function calculateRouteCost(origen, destino, precios, personas = 1)
     distance: leg.distance.text,
     duration: leg.duration.text,
     distanceKm,
-    durationHours
+    durationHours,
+    polyline: dirResponse.routes[0].overview_polyline?.points || null
   };
+}
+
+// Decodifica el "encoded polyline" que devuelve Google Directions a una lista
+// de [lat, lng] que Leaflet puede dibujar directo con L.polyline(...).
+export function decodePolyline(encoded) {
+  if (!encoded) return [];
+  let index = 0, lat = 0, lng = 0;
+  const puntos = [];
+
+  while (index < encoded.length) {
+    let result = 1, shift = 0, b;
+    do {
+      b = encoded.charCodeAt(index++) - 63 - 1;
+      result += b << shift;
+      shift += 5;
+    } while (b >= 0x1f);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+    result = 1;
+    shift = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63 - 1;
+      result += b << shift;
+      shift += 5;
+    } while (b >= 0x1f);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+    puntos.push([lat * 1e-5, lng * 1e-5]);
+  }
+  return puntos;
 }
 
 export function exportToExcel(data, filename = 'taxuber.xlsx') {

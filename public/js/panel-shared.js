@@ -7,7 +7,7 @@ import { empresaCol, empresaDoc } from './panel-common.js';
 import {
   collection, getDocs, addDoc, deleteDoc, doc, updateDoc, getDoc, setDoc, serverTimestamp, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { showAlert, formatDate, exportToExcel, calculateRouteCost } from './utils.js';
+import { showAlert, formatDate, exportToExcel, calculateRouteCost, decodePolyline } from './utils.js';
 
 async function callApi(path, body) {
   const idToken = await auth.currentUser.getIdToken();
@@ -24,6 +24,7 @@ async function callApi(path, body) {
 // opts: { includeManagerCreation: bool, includeBlockApp: bool, tripPrefix: 'owner' | 'manager' }
 export function makePanel(empresaId, opts = {}) {
   let map, markers = {};
+  let routeLine = null; // línea azul de la última ruta calculada, para poder borrarla antes de dibujar otra
   let driversCache = []; // choferes activos, para el selector de "Pedidos de Clientes"
   const prefix = opts.tripPrefix;
 
@@ -151,6 +152,11 @@ export function makePanel(empresaId, opts = {}) {
         if (el('price-zona')) el('price-zona').value = p.porZona || 0;
         if (el('price-km')) el('price-km').value = p.porKm || 0;
         if (el('price-hora')) el('price-hora').value = p.porHora || 0;
+        // Precarga (no obligatoria) de los campos por-viaje, para que el admin
+        // vea el valor global por defecto y solo lo toque si necesita ajustarlo.
+        if (el(`${prefix}-trip-porzona`) && el(`${prefix}-trip-porzona`).value === '') el(`${prefix}-trip-porzona`).value = p.porZona || 0;
+        if (el(`${prefix}-trip-porkm`) && el(`${prefix}-trip-porkm`).value === '') el(`${prefix}-trip-porkm`).value = p.porKm || 0;
+        if (el(`${prefix}-trip-porhora`) && el(`${prefix}-trip-porhora`).value === '') el(`${prefix}-trip-porhora`).value = p.porHora || 0;
       }
     } catch (err) {
       console.error('Error cargando precios:', err);
@@ -181,7 +187,21 @@ export function makePanel(empresaId, opts = {}) {
 
     try {
       const priceSnap = await getDoc(empresaDoc(empresaId, 'config', 'prices'));
-      const precios = priceSnap.exists() ? priceSnap.data() : { porPersona: 0, porZona: 0, porKm: 0, porHora: 0 };
+      const globalPrecios = priceSnap.exists() ? priceSnap.data() : { porPersona: 0, porZona: 0, porKm: 0, porHora: 0 };
+
+      // Zona/Km/Hora se pueden ajustar puntualmente para este viaje; si se dejan
+      // vacíos, se usa el valor global configurado en "Precios".
+      const zonaInput = document.getElementById(`${prefix}-trip-porzona`);
+      const kmInput = document.getElementById(`${prefix}-trip-porkm`);
+      const horaInput = document.getElementById(`${prefix}-trip-porhora`);
+
+      const precios = {
+        porPersona: globalPrecios.porPersona || 0,
+        porZona: zonaInput?.value !== '' ? parseFloat(zonaInput.value) : (globalPrecios.porZona || 0),
+        porKm: kmInput?.value !== '' ? parseFloat(kmInput.value) : (globalPrecios.porKm || 0),
+        porHora: horaInput?.value !== '' ? parseFloat(horaInput.value) : (globalPrecios.porHora || 0)
+      };
+
       const resultado = await calculateRouteCost(origen, destino, precios, personas);
 
       const resDiv = document.getElementById(`${prefix}-trip-result`);
@@ -191,6 +211,17 @@ export function makePanel(empresaId, opts = {}) {
         document.getElementById(`${prefix}-trip-distance-display`).textContent = resultado.distance;
         document.getElementById(`${prefix}-trip-duration-display`).textContent = resultado.duration;
       }
+
+      // Dibujar la ruta calculada en el Mapa en Vivo, en azul.
+      if (map && resultado.polyline) {
+        if (routeLine) map.removeLayer(routeLine);
+        const puntos = decodePolyline(resultado.polyline);
+        if (puntos.length) {
+          routeLine = L.polyline(puntos, { color: '#1a73e8', weight: 5 }).addTo(map);
+          map.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+        }
+      }
+
       window._panelTrip = { ...resultado, origen, destino, personas };
       showAlert('Cálculo realizado', 'success');
     } catch (err) {
@@ -369,13 +400,26 @@ export function makePanel(empresaId, opts = {}) {
       });
       viajes.forEach(v => {
         const fila = document.createElement('tr');
-        fila.innerHTML = `<td>${v.nombreConductor || 'Sin asignar'}</td><td>${v.origen || ''} → ${v.destino || ''}</td><td>$ ${v.costoTotal || 0}</td><td>${formatDate(v.fechaInicio)}</td><td><button class="btn btn-sm btn-danger" onclick="deleteTrip('${v.id}')">Eliminar</button></td>`;
+        const btnFinalizar = v.estado !== 'finalizado'
+          ? `<button class="btn btn-sm btn-success" onclick="finishTrip('${v.id}')">Finalizar</button>`
+          : '';
+        fila.innerHTML = `<td>${v.nombreConductor || 'Sin asignar'}</td><td>${v.origen || ''} → ${v.destino || ''}</td><td>$ ${v.costoTotal || 0}</td><td>${formatDate(v.fechaInicio)}</td><td>${btnFinalizar} <button class="btn btn-sm btn-danger" onclick="deleteTrip('${v.id}')">Eliminar</button></td>`;
         tabla.appendChild(fila);
       });
     } catch (err) {
       showAlert(`Error: ${err.message}`, 'danger');
     }
   }
+
+  window.finishTrip = async (id) => {
+    try {
+      await updateDoc(empresaDoc(empresaId, 'trips', id), { estado: 'finalizado', fechaFin: serverTimestamp() });
+      showAlert('Viaje finalizado', 'success');
+      loadHistory();
+    } catch (err) {
+      showAlert(`Error: ${err.message}`, 'danger');
+    }
+  };
 
   window.deleteTrip = async (id) => {
     if (!confirm('¿Eliminar viaje?')) return;
