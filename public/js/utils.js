@@ -108,13 +108,14 @@ export async function calculateRouteCost(origen, destino, precios, personas = 1,
   const pPersona = precios?.porPersona || 0;
   const pZona = precios?.porZona || 0;
 
-  let costoBase;
-  if (modo === 'km') costoBase = distanceKm * pKm;
-  else if (modo === 'hora') costoBase = durationHours * pHora;
-  else if (modo === 'zona') costoBase = pZona;
-  else costoBase = distanceKm * pKm + durationHours * pHora + pZona; // 'todos'
+  let costoTotal;
+  if (modo === 'km') costoTotal = distanceKm * pKm;
+  else if (modo === 'hora') costoTotal = durationHours * pHora;
+  else if (modo === 'personas') costoTotal = personas * pPersona;
+  // 'todos' (Panel Admin/Dueño): se mantiene la suma de todos los componentes, sin cambios.
+  else costoTotal = distanceKm * pKm + durationHours * pHora + pZona + personas * pPersona;
 
-  const costoTotal = (costoBase + personas * pPersona).toFixed(2);
+  costoTotal = costoTotal.toFixed(2);
 
   return {
     costo: `$${costoTotal}`,

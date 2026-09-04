@@ -1,31 +1,75 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Usuarios: cualquiera puede leer (para login), solo autenticados pueden escribir
-    match /users/{userId} {
-      allow read: if true;
-      allow write: if request.auth != null || true;
+
+    function isSignedIn() {
+      return request.auth != null;
     }
-    
-    // Viajes: lectura y escritura permitida
-    match /trips/{tripId} {
-      allow read, write: if true;
+    function claimEmpresa() {
+      return request.auth.token.empresaId;
     }
-    
-    // Alertas: lectura y escritura permitida
-    match /alerts/{alertId} {
-      allow read, write: if true;
+    function claimRole() {
+      return request.auth.token.role;
     }
-    
-    // Configuración (precios, estado app)
-    match /config/{configId} {
-      allow read, write: if true;
+    function sameEmpresa(empresaId) {
+      return isSignedIn() && claimEmpresa() == empresaId;
     }
-    
-    // Alertas guardadas
-    match /saved_alerts/{alertId} {
-      allow read, write: if true;
+    function isSuperadmin() {
+      return isSignedIn() && claimRole() == 'superadmin';
+    }
+    function isOwnerOrManager() {
+      return claimRole() == 'owner' || claimRole() == 'manager';
+    }
+
+    match /empresas/{empresaId} {
+      allow read: if sameEmpresa(empresaId) || isSuperadmin();
+      // Alta/baja de empresas se hace siempre desde el backend (Admin SDK),
+      // que no pasa por estas reglas. No se permite escribir desde el cliente.
+      allow write: if false;
+
+      // --- Usuarios (dueño, admin, chofer, cliente) ---
+      match /usuarios/{userId} {
+        allow read: if sameEmpresa(empresaId) && (isOwnerOrManager() || request.auth.uid == userId);
+        // Un usuario puede actualizar su propio doc (ej: chofer actualizando lat/lng),
+        // o un owner/manager puede actualizar cualquiera de su empresa (ej: activar/desactivar).
+        allow update: if sameEmpresa(empresaId) && (isOwnerOrManager() || request.auth.uid == userId);
+        // La creación y el borrado de usuarios SIEMPRE pasan por el backend (/api/create-user,
+        // /api/delete-user, /api/register-client), porque ahí es donde se asignan los
+        // custom claims (empresaId + role). Nunca se crea un usuario directo desde el cliente.
+        allow create, delete: if false;
+      }
+
+      // --- Viajes ---
+      match /trips/{tripId} {
+        allow read: if sameEmpresa(empresaId) &&
+                      (isOwnerOrManager() ||
+                       resource.data.userId == request.auth.uid ||
+                       resource.data.clienteId == request.auth.uid);
+        allow create: if sameEmpresa(empresaId) &&
+                      (isOwnerOrManager() ||
+                       request.resource.data.userId == request.auth.uid ||
+                       request.resource.data.clienteId == request.auth.uid);
+        allow update, delete: if sameEmpresa(empresaId) &&
+                      (isOwnerOrManager() || resource.data.userId == request.auth.uid);
+      }
+
+      // --- Alertas de pánico ---
+      match /alerts/{alertId} {
+        allow read, create: if sameEmpresa(empresaId);
+        allow delete: if sameEmpresa(empresaId) && isOwnerOrManager();
+      }
+
+      // --- Precios y estado de bloqueo de la empresa ---
+      match /config/{docId} {
+        allow read: if sameEmpresa(empresaId);
+        allow write: if sameEmpresa(empresaId) && isOwnerOrManager();
+      }
+
+      // --- Zonas con precio por Km propio (ej: "José Ignacio" a $100/km) ---
+      match /zonas/{zonaId} {
+        allow read: if sameEmpresa(empresaId);
+        allow write: if sameEmpresa(empresaId) && isOwnerOrManager();
+      }
     }
   }
 }

@@ -21,7 +21,27 @@ guardPage(['driver'], (session) => {
   if (nombreEl) nombreEl.textContent = driverName;
 
   initMap();
+  loadZonas();
 });
+
+async function loadZonas() {
+  const select = document.getElementById('trip-zona');
+  if (!select) return;
+  try {
+    const snap = await getDocs(empresaCol(empresaId, 'zonas'));
+    select.innerHTML = '<option value="">Sin zona (tarifa Km normal)</option>';
+    snap.forEach(d => {
+      const z = d.data();
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.dataset.preciokm = z.precioKm;
+      opt.textContent = `${z.nombre} ($${z.precioKm}/km)`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Error cargando zonas:', err);
+  }
+}
 
 async function initMap() {
   try {
@@ -81,12 +101,22 @@ window.calculateCost = async () => {
   const destino = document.getElementById('trip-destino').value.trim();
   const personas = parseInt(document.getElementById('trip-personas').value) || 1;
   const modo = document.getElementById('trip-modo')?.value || 'km';
+  const zonaSelect = document.getElementById('trip-zona');
+  const zonaId = zonaSelect?.value || '';
+  const zonaPrecioKm = zonaId ? parseFloat(zonaSelect.selectedOptions[0].dataset.preciokm) : null;
 
   if (!origen || !destino) return showAlert('Escribí origen y destino', 'warning');
 
   try {
     const priceSnap = await getDoc(empresaDoc(empresaId, 'config', 'prices'));
-    const precios = priceSnap.exists() ? priceSnap.data() : { porPersona: 0, porZona: 0, porKm: 0, porHora: 0 };
+    let precios = priceSnap.exists() ? priceSnap.data() : { porPersona: 0, porZona: 0, porKm: 0, porHora: 0 };
+
+    // Si el chofer marcó una zona y está calculando por Km, se usa el precio
+    // por km propio de esa zona en vez del precio general de la empresa.
+    if (modo === 'km' && zonaPrecioKm !== null && !isNaN(zonaPrecioKm)) {
+      precios = { ...precios, porKm: zonaPrecioKm };
+    }
+
     const resultado = await calculateRouteCost(origen, destino, precios, personas, modo);
 
     document.getElementById('trip-result').style.display = 'block';

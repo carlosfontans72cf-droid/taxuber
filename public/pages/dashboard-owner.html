@@ -107,6 +107,17 @@
       </div>
     </div>
 
+    <h3 class="section-title">Zonas (precio por Km propio)</h3>
+    <div class="card">
+      <p style="font-size:0.85rem;color:#888">Ej: "José Ignacio" a $100/km, "Maldonado" a $70/km. El chofer elige la zona al calcular un viaje; si no elige ninguna, se usa el precio "Por Km" general.</p>
+      <div class="grid grid-2">
+        <input type="text" id="zona-nombre" class="form-control" placeholder="Nombre de la zona">
+        <input type="number" id="zona-preciokm" class="form-control" placeholder="Precio por Km ($)" step="0.01" min="0">
+      </div>
+      <button id="btn-add-zona" class="btn btn-primary" style="margin-top:10px">Agregar Zona</button>
+      <div id="zonas-list" style="margin-top:15px"></div>
+    </div>
+
     <h3 class="section-title">Precios</h3>
     <div class="card">
       <div class="grid grid-2">

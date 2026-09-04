@@ -324,6 +324,64 @@ export function makePanel(empresaId, opts = {}) {
     }
   };
 
+  // --- Zonas (precio por Km propio de cada zona, ej: "José Ignacio" a $100/km) ---
+  async function loadZonas() {
+    const cont = document.getElementById('zonas-list');
+    if (!cont) return;
+    cont.innerHTML = '';
+    try {
+      const snap = await getDocs(empresaCol(empresaId, 'zonas'));
+      const zonas = [];
+      snap.forEach(d => zonas.push({ id: d.id, ...d.data() }));
+      zonas.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || ''));
+
+      if (!zonas.length) {
+        cont.innerHTML = '<p style="color:#888">Todavía no cargaste ninguna zona.</p>';
+        return;
+      }
+      zonas.forEach(z => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <div><strong>${z.nombre}</strong> — $${z.precioKm}/km</div>
+          <div class="btn-group" style="margin-top:8px">
+            <button class="btn btn-sm btn-danger" onclick="deleteZona('${z.id}')">Eliminar</button>
+          </div>`;
+        cont.appendChild(div);
+      });
+    } catch (err) {
+      showAlert(`Error: ${err.message}`, 'danger');
+    }
+  }
+
+  window.addZona = async () => {
+    const nombre = document.getElementById('zona-nombre').value.trim();
+    const precioKm = parseFloat(document.getElementById('zona-preciokm').value);
+
+    if (!nombre || isNaN(precioKm) || precioKm < 0) return showAlert('Completá nombre y precio por km', 'warning');
+
+    try {
+      await addDoc(empresaCol(empresaId, 'zonas'), { nombre, precioKm, createdAt: serverTimestamp() });
+      document.getElementById('zona-nombre').value = '';
+      document.getElementById('zona-preciokm').value = '';
+      showAlert('Zona agregada', 'success');
+      loadZonas();
+    } catch (err) {
+      showAlert(`Error: ${err.message}`, 'danger');
+    }
+  };
+
+  window.deleteZona = async (id) => {
+    if (!confirm('¿Eliminar esta zona?')) return;
+    try {
+      await deleteDoc(empresaDoc(empresaId, 'zonas', id));
+      showAlert('Zona eliminada', 'success');
+      loadZonas();
+    } catch (err) {
+      showAlert(`Error: ${err.message}`, 'danger');
+    }
+  };
+
   function initLiveMap() {
     const cont = document.getElementById('live-map');
     if (!cont) return;
@@ -491,6 +549,7 @@ export function makePanel(empresaId, opts = {}) {
     document.getElementById('btn-create-trip')?.addEventListener('click', window.createTrip);
     document.getElementById('btn-block-app')?.addEventListener('click', window.blockApp);
     document.getElementById('btn-unblock-app')?.addEventListener('click', window.unblockApp);
+    document.getElementById('btn-add-zona')?.addEventListener('click', window.addZona);
   }
 
   return {
@@ -507,7 +566,7 @@ export function makePanel(empresaId, opts = {}) {
         console.error('Error cargando usuarios:', err);
       }
 
-      await Promise.allSettled([loadPrices(), loadAlerts(), loadStats(), loadPendingRequests()]);
+      await Promise.allSettled([loadPrices(), loadAlerts(), loadStats(), loadPendingRequests(), loadZonas()]);
 
       try {
         initLiveMap();
